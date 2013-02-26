@@ -1,4 +1,4 @@
-Different utilities to primarily debug JVM behavior on Linux. Usefult while rolling out your own script to run Java daemon or just to check how OS setting affect Java.
+Different utilities to primarily debug JVM behavior on Linux. Useful while rolling out your own script to run Java daemon or just to check how OS settings affect Java.
 
 
 Build
