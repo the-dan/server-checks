@@ -1,0 +1,49 @@
+Different utilities to primarily debug JVM behavior on Linux. Usefult while rolling out your own script to run Java daemon or just to check how OS setting affect Java.
+
+
+Build
+======
+$ mvn clean package assembly:single
+
+Usage
+======
+
+Usage: black-hole [options]
+  Options:
+    -d, --delay        Delays N ms after each iteration
+                       Default: 100
+    -f, --file         Read this file into memory
+    -i, --iterations   Adds iterations count of "0123456789" into array
+                       Default: 1000000
+
+Usage: date [options]
+  Options:
+    -d, --date   Date in dd.mm.yyyy format to get GMT offset at
+
+Usage: max-threads [options]
+  Options:
+    -c, --count   Number of threads to create
+                  Default: 100
+    -s, --sleep   How many seconds created thread will sleep for. Long.MAX_LONG
+                  if absent
+                  Default: 9223372036854775807
+
+Usage: nslookup [options]
+  Options:
+    -a, --address   Address to resolve
+
+Usage: sleepy [options]
+  Options:
+    -s, --sleep   Be active for, secs. Use 0 for infinity. Default: 60 secs
+                  Default: -1
+
+Usage: max-fd [options]
+
+Usage: env [options]
+
+Usage: slowpoke [options]
+  Options:
+    -p, --port   Port to bind to. Default: 10000
+                 Default: 10000
+    -u, --uri    URI to create info servlet at. Default: /info
+                 Default: /info
