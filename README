@@ -3,7 +3,15 @@ Different utilities to primarily debug JVM behavior on Linux. Useful while rolli
 
 Build
 ======
+For zip package:
+
 $ mvn clean package assembly:single
+
+For real executable file:
+$ mvn clean package
+$ cat src/main/scripts/rex.sh target/server-checks.jar > ./sc
+$ chmod u+x ./sc
+
 
 Usage
 ======
