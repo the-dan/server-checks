@@ -15,6 +15,8 @@ public class BasicCommandsModule extends CommandsModule {
 		add("max-fd", new MaxFD());
 		add("env", new SystemProperties());
 		add("slowpoke", new SlowpokeServer());
+		add("so", new SocketCheck());
+		add("chars", new CharDumper());
 	}
 	
 }
