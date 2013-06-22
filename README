@@ -12,6 +12,18 @@ $ mvn clean package
 $ cat src/main/scripts/rex.sh target/server-checks.jar > ./sc
 $ chmod u+x ./sc
 
+While in developement mode, it's more convenient (although not very convenient, but better than running from IDE)
+to use mvn exec plugin to run all this stuff:
+
+$ mvn -Dexec.args="" exec:java
+
+Socket testing
+================
+If you don't want to delay sending till the end of the line (i.e. send entered character right away), you may use telnet in 'character mode'.
+
+E.g.:
+telnet localhost 5050
+mode character
 
 Usage
 ======

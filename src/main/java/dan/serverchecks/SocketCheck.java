@@ -3,16 +3,23 @@ package dan.serverchecks;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -49,6 +56,16 @@ import dan.serverchecks.ServerChecks.ServerCheckCommand;
 		"If file not specified, reads from stdin")
 public class SocketCheck implements ServerCheckCommand {
 
+	
+	private void teeCopy(InputStream is, OutputStream os) throws IOException {
+		byte[] buffer = new byte[4096];
+        int n = 0;
+        while (-1 != (n = is.read(buffer))) {
+            os.write(buffer, 0, n);
+            log(new String(buffer));
+        }
+	}
+	
 	private final class SocketReader implements Runnable {
 		private Socket s = null;
 		
@@ -62,7 +79,7 @@ public class SocketCheck implements ServerCheckCommand {
 				is = s.getInputStream();
 				IOUtils.copy(is, System.out);
 			} catch (IOException e) {
-				System.err.println("Error reading from socket");
+				log("Error reading from socket");
 				e.printStackTrace();
 			} finally {
 				IOUtils.closeQuietly(is);
@@ -86,8 +103,22 @@ public class SocketCheck implements ServerCheckCommand {
 	@Parameter(names = {"-f", "--file"}, required = false, description = "File to read data from. Data read will be written to socket output stream")
 	public File file;
 	
+	@Parameter(names = {"-o", "--log-file"}, required = false, description = "File to log input and output to")
+	public File log;
+	
 	@Parameter(description = "listen <port> | connect <host> <port>")
 	public List<String> params = new ArrayList<String>();
+	
+	private PrintWriter osw;
+	
+	private void log(String message) {
+		SimpleDateFormat sdf = new SimpleDateFormat("dd.mm.yyyy HH:MM:SS");
+		String date = sdf.format(new Date());
+		if (osw != null) {
+			osw.println(date + " " + message);
+		}
+		System.out.println(date + " " + message);
+	}
 	
 	public void execute() {
 		
@@ -138,6 +169,16 @@ public class SocketCheck implements ServerCheckCommand {
 				System.exit(1);
 			}
 		}
+		
+		try {
+			if (log != null) {
+				FileOutputStream fos = new FileOutputStream(log);
+				osw = new PrintWriter(fos);
+			}
+		} catch (FileNotFoundException e1) {
+			System.err.println("File " + log + " not found");
+			System.exit(1);
+		}
 	
 		if ("connect".equals(mode)) {
 			Socket s = new Socket();
@@ -155,9 +196,9 @@ public class SocketCheck implements ServerCheckCommand {
 			try {
 				ss = new ServerSocket();
 				ss.setReuseAddress(true);
-				System.out.print("Binding on " + hostname + ":" + port + " ...");
+				log("Binding on " + hostname + ":" + port + " ...");
 				ss.bind(new InetSocketAddress(hostname, port));
-				System.out.println("done");
+				log("done");
 			} catch (IOException e) {
 				System.out.println("Bind failed");
 				e.printStackTrace();
@@ -166,11 +207,11 @@ public class SocketCheck implements ServerCheckCommand {
 			
 			Socket cs = null;
 			try {
-				System.out.println("Accepting");
+				log("Accepting");
 				cs = ss.accept();
-				System.out.println("done");
+				log("done");
 			} catch (IOException e) {
-				System.out.println("Accept failed");
+				log("Accept failed");
 				e.printStackTrace();
 				System.exit(3);
 			}
@@ -194,7 +235,7 @@ public class SocketCheck implements ServerCheckCommand {
 				}
 				
 			} catch (IOException e) {
-				System.out.println("IO Error while reading or writing");
+				log("IO Error while reading or writing");
 				e.printStackTrace();
 			} finally {
 				IOUtils.closeQuietly(os);
@@ -213,16 +254,16 @@ public class SocketCheck implements ServerCheckCommand {
 			FileInputStream fis) {
 		SocketAddress sa = new InetSocketAddress(hostname, port);
 		try {
-			System.out.println("Connecting...");
+			log("Connecting...");
 			
 			s.connect(sa, (int)TimeUnit.SECONDS.toMillis(connectTimeout));
 			
-			System.out.println("done");
+			log("done");
 		} catch (SocketTimeoutException e) {
-			System.out.println("Timed out on connect");
+			log("Timed out on connect");
 			e.printStackTrace();
 		} catch (IOException e) {
-			System.out.println("IO error occured");
+			log("IO error occured");
 			e.printStackTrace();
 		}
 
@@ -259,7 +300,7 @@ public class SocketCheck implements ServerCheckCommand {
 			}
 			
 		} catch (IOException e) {
-			System.out.println("IO Error while reading or writing");
+			log("IO Error while reading or writing");
 			e.printStackTrace();
 		} finally {
 			IOUtils.closeQuietly(os);
