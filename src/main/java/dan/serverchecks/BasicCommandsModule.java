@@ -9,6 +9,7 @@ public class BasicCommandsModule extends CommandsModule {
 	public void configure() {
 		add("black-hole", new ServerChecks.BlackHoleCommand());
 		add("date", new DateCheck());
+		add("locale", new ServerChecks.LocaleCheck());
 		add("max-threads", new MaxThreadsCheck());
 		add("nslookup", new NSLookupCheck());
 		add("sleepy", new SleepyDaemon());
@@ -17,6 +18,10 @@ public class BasicCommandsModule extends CommandsModule {
 		add("slowpoke", new SlowpokeServer());
 		add("so", new SocketCheck());
 		add("chars", new CharDumper());
+		add("sigterm", new SigtermCheck());
+		add("deadlock", new DeadlockCheck());
+		add("lock", new LockCheck());
+		
 	}
 	
 }
