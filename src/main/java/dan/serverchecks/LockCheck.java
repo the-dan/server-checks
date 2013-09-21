@@ -1,11 +1,12 @@
 package dan.serverchecks;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import com.beust.jcommander.Parameter;
 
 import dan.serverchecks.ServerChecks.ServerCheckCommand;
 
@@ -15,7 +16,7 @@ import dan.serverchecks.ServerChecks.ServerCheckCommand;
  * 
  * Implements following types of blocking scenarios:
  * <ul>
- * <li>wait for synchonized object
+ * <li>wait for synchronized object
  * <li>wait for reentrant lock
  * <li>wait for RW lock for reading
  * <li>wait for socket read
@@ -25,18 +26,45 @@ import dan.serverchecks.ServerChecks.ServerCheckCommand;
  */
 public class LockCheck implements ServerCheckCommand {
 
-	public static interface Customer {
+	public static enum CustomerType {
+		JOINING(new JoiningCustomer()),
+		LOCKING(new LockingCustomer()),
+		WAITING(new ObjectWaitingCustomer()),
+		SYNCING(new SyncSleepWait()),
+		RWLOCKING(new RWLockingCustomer())
+		;
+		
+		Customer c;
+		
+		CustomerType(Customer c) {
+			this.c = c;
+		}
+	}
+	
+	@Parameter(names = {"-t", "--lock-type"}, required = false)
+	public CustomerType lockType = CustomerType.SYNCING;
+	
+	@Parameter(names = { "-w", "--wait" }, required=false, description="Wait on lock for, secs")
+	public int waitInSecs = 60; 
+			
+	public static abstract class  Customer {
+		protected long waitForMs;
+		
+		public void setWaitTimeInMs(long waitForMs) {
+			this.waitForMs = waitForMs;
+		}
+		
 		// public contract with waiter
-		public void makeOrder();
+		public abstract void makeOrder();
 
 		// internal affairs of customer
-		public void choose();
+		public abstract void choose();
 	}
 
-	public static class JoiningCustomer implements Customer {
+	public static class JoiningCustomer extends Customer {
 
 		Thread wife;
-
+		
 		public void makeOrder() {
 			try {
 				wife.join();
@@ -52,7 +80,7 @@ public class LockCheck implements ServerCheckCommand {
 
 				public void run() {
 					try {
-						Thread.sleep(60000);
+						Thread.sleep(waitForMs);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -63,7 +91,7 @@ public class LockCheck implements ServerCheckCommand {
 
 	}
 
-	public static class RWLockingCustomer implements Customer {
+	public static class RWLockingCustomer extends Customer {
 
 		ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -81,7 +109,7 @@ public class LockCheck implements ServerCheckCommand {
 			Lock wl = lock.writeLock();
 			wl.lock();
 			try {
-				Thread.sleep(60000);
+				Thread.sleep(waitForMs);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} finally {
@@ -91,14 +119,14 @@ public class LockCheck implements ServerCheckCommand {
 
 	}
 
-	public static class ObjectWaitingCustomer implements Customer {
+	public static class ObjectWaitingCustomer extends Customer {
 
 		Object lockObj = new Object();
 
 		public void makeOrder() {
 			synchronized (lockObj) {
 				try {
-					lockObj.wait(60000L);
+					lockObj.wait(waitForMs);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -109,7 +137,7 @@ public class LockCheck implements ServerCheckCommand {
 		public void choose() {
 			synchronized (lockObj) {
 				try {
-					lockObj.wait(60000L);
+					lockObj.wait(waitForMs);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -118,7 +146,7 @@ public class LockCheck implements ServerCheckCommand {
 
 	}
 
-	public static class SyncSleepWait implements Customer {
+	public static class SyncSleepWait extends Customer {
 
 		public void makeOrder() {
 			synchronized (this) {
@@ -129,7 +157,7 @@ public class LockCheck implements ServerCheckCommand {
 		public void choose() {
 			synchronized (this) {
 				try {
-					Thread.sleep(60000);
+					Thread.sleep(waitForMs);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
@@ -138,13 +166,13 @@ public class LockCheck implements ServerCheckCommand {
 
 	}
 
-	public static class LockingCustomer implements Customer {
+	public static class LockingCustomer extends Customer {
 		Lock lock = new ReentrantLock();
 
 		public void choose() {
 			lock.lock();
 			try {
-				Thread.sleep(60000);
+				Thread.sleep(waitForMs);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} finally {
@@ -199,11 +227,12 @@ public class LockCheck implements ServerCheckCommand {
 	}
 
 	public void execute() {
-		// Customer c = new SyncSleepWait();
-		// Customer c = new LockingCustomer();
-		// Customer c = new ObjectWaitingCustomer();
-		// Customer c = new RWLockingCustomer();
-		Customer c = new JoiningCustomer();
+		Customer c = this.lockType.c;
+		System.out.println("Using " + this.lockType.name());
+		
+		long waitInMs = TimeUnit.SECONDS.toMillis(waitInSecs);
+		c.setWaitTimeInMs(waitInMs);
+		
 		Waiter w = new Waiter();
 
 		Thread tt = new Thread(new WaiterThread(w, c), "waiter-thread");
