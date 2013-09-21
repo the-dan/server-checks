@@ -6,6 +6,8 @@
 # TL;DR:
 # nid in java stacktrace = native thread id (NID)
 
-PID=$(top -n1 | grep -m1 java | perl -pe 's/\e\[?.*?[\@-~] ?//g' | cut -f1 -d' ')
-NID=$(printf "%x" $(top -n1 -H | grep -m1 java | perl -pe 's/\e\[?.*?[\@-~] ?//g' | cut -f1 -d' '))
+PID=$(ps -C java -o pid --no-heading --sort -%cpu | head)
+# unfortunately ps doesn't seem to sort itself based on thread's CPU
+NID=$(ps -L -p $PID -C java -o lwp,c,pid,comm --no-heading --sort -%cpu | sort -k 3 -t ' ' -r | head -n 1 | cut -d ' ' -f 2)
+NID=$(printf '%x' $NID)
 jstack $PID | grep -A500 $NID | grep -m1 "^$" -B500
