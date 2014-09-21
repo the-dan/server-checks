@@ -11,7 +11,7 @@ import com.beust.jcommander.Parameter;
 import dan.serverchecks.ServerChecks.ServerCheckCommand;
 
 /**
- * Similar to DeadlockCheck, but there's not deadlock involved. Just to show how
+ * Similar to DeadlockCheck, but there's no deadlock involved. Just to show how
  * different types of locks are seen in stack traces.
  * 
  * Implements following types of blocking scenarios:
