@@ -39,6 +39,35 @@ import com.beust.jcommander.Parameters;
 
 import dan.serverchecks.ServerChecks.ServerCheckCommand;
 
+/**
+ * How does SSL server certificate work?
+ * * socket connection to the server established
+ * * server sends SSL server certificates chain to the client in course of SSL handshake
+ * * client tries to find a certificate path from server certificate (first in chain) to one of the root certificates
+ *   in truststore
+ * ** if client finds such a path, it moves on, SSL handshake is complete
+ * ** if client doesn't find such a path, it terminates socket connection
+ * 
+ * This utility doesn't try to find a path, it simply performs 4 tests on certificate in returned chain:
+ * * If one of the certificates' issuer matches one in trust store, it verifies whether chain certificate is signed by one in trust store.
+ *   It is a strict check. If it passes it means there is a chance that chain is correct.
+ * * If one of the chain certificates matches certificate in trust store directly. It is a strict check.
+ *   In real-case scenarios it's weird. Because you can't use CA certificates in trust store on a server. But probably
+ *   you are trying out some certificates to make sure they are in Java's keystore. Or you added server cert into your own
+ *   trust store and try to check if everything's fine with it. 
+ * * If one of the chain certificates matches certificate in trust store by public key. It doesn't mean anything from SSL standpoint, but
+ *   it's interesting to see, because it means there's two certs with same key but different subjects.
+ * * If one of the chain certificates matches certificate in trust store by subject. It doesn't mean anython from SSL standpoing, but it's
+ *   interesting to see, because it means there's two certs with same subject but possibly different public keys. 
+ *
+ *
+ *	Basically, this tool is useful when:
+ *	* you connect to some server and receive PKIX path validation error. You can download server certificates using browser and try to
+ *    check them manually, starting from the root. PKIX path validation error is not very informative, this way you can be sure.
+ *  * you added a server certificates into a trust store and want to try it out. See also CheckSSL command for tests.
+ *  
+ *
+ */
 @Parameters(commandDescription = "Checks if provided certificates is in keystore. Provides additional troubleshooting info")
 public class CheckKeystoreForCertificate implements ServerCheckCommand {
 

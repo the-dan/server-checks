@@ -20,10 +20,27 @@ import com.beust.jcommander.Parameter;
 
 import dan.serverchecks.ServerChecks.ServerCheckCommand;
 
+/**
+ * This tool is useful when:
+ * * you created truststore and/or keystore and want to check it out before changing production settings
+ * * you want to debug connectivity to HTTPS endpoint: check whether server certificate is trusted 
+ *
+ */
 public class CheckSSL implements ServerCheckCommand {
 
-	@Parameter(description = "[<url>]")
+	@Parameter(description = "[<url>]", required = true)
 	List<String> params = new ArrayList<String>();
+	
+	// TODO: implement
+	@Parameter(names = {"-t", "--truststore"}, description = "Truststore to use")
+	String truststoreFileName = "";
+	
+	// TODO: implement
+	@Parameter(names = {"-k", "--keystore"}, description = "Keystore to use")
+	String keystoreFileName = "";
+	
+	@Parameter(names = {"-s", "--save"}, description = "Save server certificates")
+	boolean isSaveCertificates = false;
 
 	public void execute() {
 		try {
@@ -38,7 +55,7 @@ public class CheckSSL implements ServerCheckCommand {
 			SavingTrustManager[] tms = SavingTrustManager
 					.getWrappedDefaultTrustManagers();
 
-			SSLContext context = SSLContext.getDefault();
+			SSLContext context = SSLContext.getInstance("TLS");
 
 			System.out
 					.println("SSL context protocol: " + context.getProtocol());
