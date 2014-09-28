@@ -1,0 +1,9 @@
+Package: server-checks
+Version: 1.0
+Section: misc
+Priority: optional
+Architecture: all
+Depends: jdk (>= 1.5)
+Maintainer: the-dan <dubenchuk.anton@gmail.com>
+Description: Useful tools to check Java bahavior 
+Distribution: development

@@ -2,6 +2,8 @@ package dan.serverchecks;
 
 import dan.serverchecks.ServerChecks.DateCheck;
 import dan.serverchecks.http.SlowpokeServer;
+import dan.serverchecks.ssl.CheckKeystoreForCertificate;
+import dan.serverchecks.ssl.CheckSSL;
 
 public class BasicCommandsModule extends CommandsModule {
 
@@ -21,7 +23,8 @@ public class BasicCommandsModule extends CommandsModule {
 		add("sigterm", new SigtermCheck());
 		add("deadlock", new DeadlockCheck());
 		add("lock", new LockCheck());
-		
+		add("ks", new CheckKeystoreForCertificate());
+		add("ssl", new CheckSSL());
 	}
 	
 }
