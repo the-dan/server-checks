@@ -1,5 +1,6 @@
 package dan.serverchecks.ssl;
 
+import java.security.KeyStore;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -66,6 +67,21 @@ public class SavingTrustManager implements X509TrustManager {
 	
 	public static SavingTrustManager[] getWrappedDefaultTrustManagers() {
 		TrustManager[] tms = TrustManagerUtils.getDefaultTrustManagers();
+		
+		ArrayList<SavingTrustManager> usedTms = new ArrayList<SavingTrustManager>();
+		
+		for (TrustManager tm : tms) {
+			if (tm instanceof X509TrustManager) {
+				usedTms.add(new SavingTrustManager((X509TrustManager)tm));
+			}
+		}
+		
+		return usedTms.toArray(new SavingTrustManager[0]);
+	}
+	
+	public static SavingTrustManager[] getWrappedTrustManagers(KeyStore ks) {
+		
+		TrustManager[] tms = TrustManagerUtils.getTrustManagersForKeystore(ks);
 		
 		ArrayList<SavingTrustManager> usedTms = new ArrayList<SavingTrustManager>();
 		

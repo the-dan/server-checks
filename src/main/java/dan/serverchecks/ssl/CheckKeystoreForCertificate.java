@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,6 +33,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.math.NumberUtils;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.openssl.PEMReader;
+import org.bouncycastle.openssl.PEMWriter;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.Parameter;
@@ -68,7 +70,7 @@ import dan.serverchecks.ServerChecks.ServerCheckCommand;
  *  
  *
  */
-@Parameters(commandDescription = "Checks if provided certificates is in keystore. Provides additional troubleshooting info")
+@Parameters(commandDescription = "Checks if provided certificates are in keystore. Provides additional troubleshooting info")
 public class CheckKeystoreForCertificate implements ServerCheckCommand {
 
 	@Parameter(required = false, names = { "-y", "--type" }, description = "Keystore type: JKS, PKCS12")
@@ -192,8 +194,40 @@ public class CheckKeystoreForCertificate implements ServerCheckCommand {
 				return;
 			}
 
+			CheckResult r = null;
 			for (X509Certificate certToCheck : certs) {
-				checkCertificate(certToCheck, ks);
+				if (r == null) {
+					r = checkCertificate(certToCheck, ks);
+				}
+			}
+			
+			if (saveCertificates) {
+				for (int i = 0; i < certs.size(); i++) {
+					X509Certificate c = certs.get(i);
+					String fn = "cert" + i + ".pem";
+					System.out.println("Saving certificate " + c.getSubjectX500Principal() + " to " + fn);
+					PEMWriter w = null;
+					try {
+						w = new PEMWriter(new FileWriter(fn));
+						w.writeObject(c);
+					} finally {
+						IOUtils.closeQuietly(w);
+					}
+					
+				}
+				Certificate rootCertificate = ks.getCertificate(r.issuerMatch);
+				if (rootCertificate instanceof X509Certificate) {
+					String fn = "ca" + ".pem";
+					System.out.println("Writing root certificate to " + fn);
+					PEMWriter w = null;
+					try {
+						w = new PEMWriter(new FileWriter(fn));
+						w.writeObject(rootCertificate);
+					} finally {
+						w.close();
+					}
+				}
+
 			}
 		} catch (KeyStoreException e) {
 			// TODO Auto-generated catch block
@@ -238,8 +272,14 @@ public class CheckKeystoreForCertificate implements ServerCheckCommand {
 
 		return ks;
 	}
+	
+	private static class CheckResult {
+		String publicKetMatch = null;
+		String subjectMatch = null;
+		String issuerMatch = null;
+	}
 
-	private void checkCertificate(X509Certificate certToCheck, KeyStore ks)
+	private CheckResult checkCertificate(X509Certificate certToCheck, KeyStore ks)
 			throws KeyStoreException, FileNotFoundException, IOException,
 			NoSuchAlgorithmException, CertificateException {
 		System.out.println("=============================");
@@ -328,6 +368,17 @@ public class CheckKeystoreForCertificate implements ServerCheckCommand {
 			}
 
 		}
+		
+		CheckResult r = new CheckResult();
+		r.issuerMatch = issuerMatch;
+		r.publicKetMatch = publicKetMatch;
+		r.subjectMatch = subjectMatch;
+		
+		if (StringUtils.isEmpty(r.issuerMatch)) {
+			return null;
+		}
+		
+		return r;
 
 	}
 
