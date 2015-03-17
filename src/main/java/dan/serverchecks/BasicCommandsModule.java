@@ -25,6 +25,7 @@ public class BasicCommandsModule extends CommandsModule {
 		add("lock", new LockCheck());
 		add("ks", new CheckKeystoreForCertificate());
 		add("ssl", new CheckSSL());
+		add("servessl", new ServeSSL());
 	}
 	
 }

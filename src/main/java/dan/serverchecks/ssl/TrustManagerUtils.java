@@ -74,15 +74,17 @@ public class TrustManagerUtils {
 			PEMReader pr = new PEMReader(new FileReader(ksFile));
 			Object obj = pr.readObject();
 			int i = 0;
-			while (obj != null) {
-				if (obj instanceof java.security.cert.Certificate) {
-					pemks.setCertificateEntry("cert" + i,
-							(java.security.cert.Certificate) obj);
+			if (obj != null) {
+				while (obj != null) {
+					if (obj instanceof java.security.cert.Certificate) {
+						pemks.setCertificateEntry("cert" + i,
+								(java.security.cert.Certificate) obj);
+					}
+					obj = pr.readObject();
+					i++;
 				}
-				obj = pr.readObject();
-				i++;
-			}
-			return pemks;
+				return pemks;
+			} 
 		} catch (CertificateException e) {
 			e.printStackTrace();
 		} catch (NoSuchAlgorithmException e) {
