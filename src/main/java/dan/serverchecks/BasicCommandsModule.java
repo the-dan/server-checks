@@ -19,6 +19,7 @@ public class BasicCommandsModule extends CommandsModule {
 		add("env", new SystemProperties());
 		add("slowpoke", new SlowpokeServer());
 		add("so", new SocketCheck());
+		add("busy", new BusyCheck());
 		add("chars", new CharDumper());
 		add("sigterm", new SigtermCheck());
 		add("deadlock", new DeadlockCheck());
