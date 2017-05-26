@@ -60,7 +60,7 @@ public class WaitServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 		
-		System.out.println("Thread woked up " + f.format(new Date()));
+		System.out.println("Thread is waken up " + f.format(new Date()));
 		
 		try {
 			resp.setContentType("text/plain");
